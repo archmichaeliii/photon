@@ -138,6 +138,8 @@ float clouds_cumulus_congestus_optical_depth(
         optical_depth +=
             clouds_cumulus_congestus_density(ray_pos + ray_step.xyz * dither) *
             ray_step.w;
+
+        if (optical_depth > 6.0) break;
     }
 
     return optical_depth;
@@ -183,6 +185,9 @@ vec2 clouds_cumulus_congestus_scattering(
                 cos_theta * 0.5 + 0.5) *
             powder_effect;
         extinct_amount *= 0.4;
+
+        if (scatter_amount < 1e-4) break;
+
         phase_g *= 0.5;
 
         powder_effect = mix(powder_effect, sqrt(powder_effect), 0.5);

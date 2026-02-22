@@ -115,6 +115,10 @@ float clouds_cumulus_optical_depth(
 ) {
     const float step_growth = 2.0;
 
+    // Once optical depth is this high, further accumulation has negligible
+    // effect on the exp(-optical_depth) transmittance term (< 0.2% contribution)
+    const float max_optical_depth = 6.0;
+
     float step_length = 0.1 * clouds_cumulus_thickness / float(step_count); // m
 
     vec3 ray_pos = ray_origin;
@@ -127,6 +131,10 @@ float clouds_cumulus_optical_depth(
         optical_depth +=
             clouds_cumulus_density(ray_pos + ray_step.xyz * dither) *
             ray_step.w;
+
+        // Early exit: cloud is already opaque enough that additional depth
+        // won't visibly affect lighting. exp(-6) ≈ 0.0025
+        if (optical_depth > max_optical_depth) break;
     }
 
     return optical_depth;
@@ -162,21 +170,29 @@ vec2 clouds_cumulus_scattering(
     vec3 phase_g = pow(vec3(0.6, 0.9, 0.3), vec3(1.0 + light_optical_depth));
 
     for (uint i = 0u; i < 8u; ++i) {
+        float light_transmittance = exp(-extinct_amount * light_optical_depth);
+        float sky_transmittance = exp(-extinct_amount * sky_optical_depth);
+        float ground_transmittance = exp(-extinct_amount * ground_optical_depth);
+
         scattering.x += scatter_amount *
-            exp(-extinct_amount * light_optical_depth) * phase *
+            light_transmittance * phase *
             (1.0 - 0.5 * clouds_params.l0_shadow);
         scattering.x += scatter_amount *
-            exp(-extinct_amount * ground_optical_depth) * isotropic_phase *
+            ground_transmittance * isotropic_phase *
             bounced_light;
         scattering.x += scatter_amount *
-            exp(-extinct_amount * sky_optical_depth) * isotropic_phase *
+            sky_transmittance * isotropic_phase *
             clouds_params.l0_shadow *
             0.5; // fake bounced lighting from the layer above
         scattering.y += scatter_amount *
-            exp(-extinct_amount * sky_optical_depth) * isotropic_phase;
+            sky_transmittance * isotropic_phase;
 
         scatter_amount *= scattering_falloff * powder_effect;
         extinct_amount *= 0.4;
+
+        // Early exit: remaining bounces contribute negligibly
+        if (scatter_amount < 1e-4) break;
+
         phase_g *= 0.8;
 
         powder_effect = mix(powder_effect, sqrt(powder_effect), 0.5);

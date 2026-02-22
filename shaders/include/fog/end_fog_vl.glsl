@@ -133,6 +133,8 @@ mat2x3 raymarch_end_fog(
 
     for (int i = 0; i < step_count;
          ++i, world_pos += world_step, shadow_pos += shadow_step) {
+        if (max_of(transmittance) < 0.005) break;
+
         vec3 shadow_screen_pos = distort_shadow_space(shadow_pos) * 0.5 + 0.5;
 
 #ifdef SHADOW

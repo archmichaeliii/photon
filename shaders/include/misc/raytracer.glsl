@@ -81,12 +81,26 @@ bool raymarch_depth_buffer(
         return false;
     }
 
-    // Refinement loop
+    // Refinement loop (binary search)
 
     float final_depth;
 
+    // Minimum step size in screen space - stop refining once step is sub-pixel
+    float min_step_sq = length_squared(view_pixel_size);
+
     for (int i = 0; i < refinement_step_count; ++i) {
         ray_step *= 0.5;
+
+        // Early exit: step size is sub-pixel, further refinement is invisible
+        if (length_squared(ray_step.xy) < min_step_sq) {
+            final_depth = texelFetch(
+                              SSRT_DEPTH_SAMPLER,
+                              ivec2(ray_pos.xy * view_res * taau_render_scale),
+                              0
+            )
+                              .x;
+            break;
+        }
 
         float depth = texelFetch(
                           SSRT_DEPTH_SAMPLER,

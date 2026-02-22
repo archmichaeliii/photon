@@ -83,6 +83,8 @@ vec4 draw_crepuscular_rays(
     vec3 transmittance = vec3(1.0);
 
     for (uint i = 0u; i < step_count; ++i) {
+        if (max_of(transmittance) < 0.005) break;
+
         vec3 ray_position_planet =
             ray_origin_world + ray_step_planet * (float(i) + dither);
         vec3 ray_position_shadow =

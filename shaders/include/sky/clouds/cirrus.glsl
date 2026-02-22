@@ -165,6 +165,8 @@ float clouds_cirrus_optical_depth(vec3 ray_origin, vec3 ray_dir, float dither) {
         optical_depth +=
             clouds_cirrus_density(sphere_pos.xz, altitude_fraction) *
             ray_step.w;
+
+        if (optical_depth > 6.0) break;
     }
 
     return optical_depth;

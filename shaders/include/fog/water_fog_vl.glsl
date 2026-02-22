@@ -78,6 +78,8 @@ mat2x3 raymarch_water_fog(
              world_pos += world_step,
              shadow_pos += shadow_step,
              caustics_pos += caustics_step) {
+        if (max_of(transmittance) < 0.005) break;
+
         vec3 shadow_screen_pos = distort_shadow_space(shadow_pos) * 0.5 + 0.5;
 
 #if defined SHADOW && (defined WORLD_OVERWORLD || defined WORLD_END)

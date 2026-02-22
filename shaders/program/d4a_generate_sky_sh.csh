@@ -123,16 +123,37 @@ for (uint stride = sample_count / 2u; stride > 0u; stride /= 2u) {
     } \
     barrier();
 
+// Sub-warp strides: on Nvidia/AMD (warp/wavefront size >= 32), threads within
+// a warp execute in lockstep so we only need a shared memory barrier, not a
+// full execution barrier. This avoids unnecessary thread synchronization.
+#define PARALLEL_REDUCTION_ITER_SUBWARP(STRIDE) \
+    if (i < (STRIDE)) { \
+        for (uint band = 0u; band < 9u; ++band) { \
+            shared_memory[i][band] += shared_memory[i + (STRIDE)][band]; \
+        } \
+    } \
+    memoryBarrierShared();
+
     PARALLEL_REDUCTION_ITER(128u)
     PARALLEL_REDUCTION_ITER(64u)
     PARALLEL_REDUCTION_ITER(32u)
+#ifdef MC_GL_RENDERER_INTEL
     PARALLEL_REDUCTION_ITER(16u)
     PARALLEL_REDUCTION_ITER(8u)
     PARALLEL_REDUCTION_ITER(4u)
     PARALLEL_REDUCTION_ITER(2u)
     PARALLEL_REDUCTION_ITER(1u)
+#else
+    // Nvidia/AMD: lighter memory barrier for sub-warp strides
+    PARALLEL_REDUCTION_ITER_SUBWARP(16u)
+    PARALLEL_REDUCTION_ITER_SUBWARP(8u)
+    PARALLEL_REDUCTION_ITER_SUBWARP(4u)
+    PARALLEL_REDUCTION_ITER_SUBWARP(2u)
+    PARALLEL_REDUCTION_ITER_SUBWARP(1u)
+#endif
 
 #undef PARALLEL_REDUCTION_ITER
+#undef PARALLEL_REDUCTION_ITER_SUBWARP
 
     // Save SH coeff in colorimg4
 

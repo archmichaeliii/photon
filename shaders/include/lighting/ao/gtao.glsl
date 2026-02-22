@@ -37,6 +37,9 @@ float compute_maximum_horizon_angle(
         ray_step * (dither + max_of(view_pixel_size) * rcp_length(ray_step));
 
     for (int i = 0; i < GTAO_HORIZON_STEPS; ++i, ray_pos += ray_step) {
+        // Early exit: horizon angle is already at maximum (fully occluded)
+        if (max_cos_theta >= 1.0) break;
+
         ivec2 texel =
             ivec2(clamp01(ray_pos) * view_res * taau_render_scale - 0.5);
         float depth = texelFetch(combined_depth_tex, texel, 0).x;

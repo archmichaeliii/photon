@@ -118,6 +118,7 @@ float clouds_altocumulus_optical_depth(
     const uint step_count
 ) {
     const float step_growth = 2.0;
+    const float max_optical_depth = 6.0;
 
     float step_length = (0.25 + 0.25 * (time_sunrise + time_sunset)) *
         clouds_altocumulus_thickness / float(step_count); // m
@@ -132,6 +133,8 @@ float clouds_altocumulus_optical_depth(
         optical_depth +=
             clouds_altocumulus_density(ray_pos + ray_step.xyz * dither) *
             ray_step.w;
+
+        if (optical_depth > max_optical_depth) break;
     }
 
     return optical_depth;
@@ -179,6 +182,9 @@ vec2 clouds_altocumulus_scattering(
                 cos_theta * 0.5 + 0.5) *
             powder_effect;
         extinct_amount *= 0.45;
+
+        if (scatter_amount < 1e-4) break;
+
         phase_g *= 0.7;
 
         powder_effect = mix(powder_effect, sqrt(powder_effect), 0.5);

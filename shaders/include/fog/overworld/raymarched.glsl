@@ -112,6 +112,9 @@ mat2x3 raymarch_air_fog(
 
     for (int i = 0; i < step_count;
          ++i, world_pos += world_step, shadow_pos += shadow_step) {
+        // Early exit when fog is already nearly opaque
+        if (max_of(transmittance) < 0.005) break;
+
         vec3 shadow_screen_pos = distort_shadow_space(shadow_pos) * 0.5 + 0.5;
 
 #if defined SHADOW && !defined PROGRAM_DEFERRED0
