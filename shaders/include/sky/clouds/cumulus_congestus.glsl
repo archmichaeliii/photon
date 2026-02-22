@@ -138,8 +138,6 @@ float clouds_cumulus_congestus_optical_depth(
         optical_depth +=
             clouds_cumulus_congestus_density(ray_pos + ray_step.xyz * dither) *
             ray_step.w;
-
-        if (optical_depth > 6.0) break;
     }
 
     return optical_depth;

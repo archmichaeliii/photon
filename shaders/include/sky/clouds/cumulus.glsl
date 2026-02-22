@@ -115,10 +115,6 @@ float clouds_cumulus_optical_depth(
 ) {
     const float step_growth = 2.0;
 
-    // Once optical depth is this high, further accumulation has negligible
-    // effect on the exp(-optical_depth) transmittance term (< 0.2% contribution)
-    const float max_optical_depth = 6.0;
-
     float step_length = 0.1 * clouds_cumulus_thickness / float(step_count); // m
 
     vec3 ray_pos = ray_origin;
@@ -131,10 +127,6 @@ float clouds_cumulus_optical_depth(
         optical_depth +=
             clouds_cumulus_density(ray_pos + ray_step.xyz * dither) *
             ray_step.w;
-
-        // Early exit: cloud is already opaque enough that additional depth
-        // won't visibly affect lighting. exp(-6) ≈ 0.0025
-        if (optical_depth > max_optical_depth) break;
     }
 
     return optical_depth;
